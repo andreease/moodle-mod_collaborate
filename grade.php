@@ -36,5 +36,3 @@ require_login();
 
 // In the simplest case just redirect to the view page.
 redirect('view.php?id=' . $id);
-
-//woharfdef
