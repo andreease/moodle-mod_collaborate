@@ -46,3 +46,6 @@ $string['nocollaborates'] = 'No instances';
 
 // Mod form specific collaborate settings.
 $string['title'] = 'Activity title';
+
+// Week 2 Task 1.
+$string['pageviewed'] = 'Page viewed';
