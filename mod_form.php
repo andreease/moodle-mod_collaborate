@@ -23,12 +23,14 @@
  * @package    mod_collaborate
  * @copyright  2019 Richard Jones richardnz@outlook.com
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @see https://github.com/moodlehq/moodle-mod_collaborate
- * @see https://github.com/justinhunt/moodle-mod_collaborate */
+ * @see https://github.com/moodlehq/moodle-mod_simplemod
+ * @see https://github.com/justinhunt/moodle-mod_simplemod */
 
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/course/moodleform_mod.php');
+
+use mod_collaborate\local\collaborate_editor;
 
 /**
  * Module instance settings form
@@ -53,7 +55,7 @@ class mod_collaborate_mod_form extends moodleform_mod
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
         // Adding the standard "name" field.
-        $mform->addElement('text', 'name', get_string('collaboratename', 'collaborate'), array('size' => '64'));
+        $mform->addElement('text', 'name', get_string('collaboratename', 'collaborate'), ['size' => '64']);
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);
         } else {
@@ -69,6 +71,13 @@ class mod_collaborate_mod_form extends moodleform_mod
         // Add a specific mod_collaborate field - title.
         $mform->addElement('text', 'title', get_string('title', 'mod_collaborate'));
         $mform->setType('title', PARAM_TEXT);
+        $mform->addHelpButton('title', 'title', 'collaborate');
+
+        // Add two editors for partner instructions.
+        $names = collaborate_editor::get_editor_names();
+        foreach ($names as $name) {
+            collaborate_editor::add_editor($mform, $this->context, $name);
+        }
 
         // Add standard grading elements.
         $this->standard_grading_coursemodule_elements();

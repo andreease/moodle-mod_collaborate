@@ -49,3 +49,8 @@ $string['title'] = 'Activity title';
 
 // Week 2 Task 1.
 $string['pageviewed'] = 'Page viewed';
+
+// Week 3 Task 1.
+// Mod form specific collaborate settings.
+$string['title'] = 'Activity Title: ';
+$string['texteditor'] = 'Editor {$a}';
