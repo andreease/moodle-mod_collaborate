@@ -26,9 +26,10 @@
  *
  * @package    mod_collaborate
  * @copyright  2019 Richard Jones richardnz@outlook.com
+ * @copyright  2022 G J Barnard - {@link http://moodle.org/user/profile.php?id=442195}.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @see https://github.com/moodlehq/moodle-mod_collaborate
- * @see https://github.com/justinhunt/moodle-mod_collaborate*/
+ * @see https://github.com/moodlehq/moodle-mod_simplemod
+ * @see https://github.com/justinhunt/moodle-mod_simplemod*/
 
 /**
  * Execute collaborate upgrade from the given old version
@@ -38,5 +39,85 @@
  */
 function xmldb_collaborate_upgrade($oldversion)
 {
+    global $DB;
+    $dbman = $DB->get_manager();
+
+    if ($oldversion < 2024051804) {
+
+        $table = new xmldb_table('collaborate');
+
+        // Define fields instructionsa, instructionsaformat, instructionsb and instructionsbformat to be added to collaborate.
+        $field = new xmldb_field('instructionsa', XMLDB_TYPE_TEXT, null, null, null, null, null, 'title');
+
+        // Conditionally launch add field instructionsa.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('instructionsaformat', XMLDB_TYPE_INTEGER, '4', null, null, null, '0', 'instructionsa');
+
+        // Conditionally launch add field instructionsaformat.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('instructionsb', XMLDB_TYPE_TEXT, null, null, null, null, null, 'instructionsaformat');
+
+        // Conditionally launch add field instructionsb.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('instructionsbformat', XMLDB_TYPE_INTEGER, '4', null, null, null, '0', 'instructionsb');
+
+        // Conditionally launch add field instructionsbformat.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Collaborate savepoint reached.
+        upgrade_mod_savepoint(true, 2024051804, 'collaborate');
+    }
+
+    if ($oldversion < 2024051806) {
+
+        // Define new table to be created.
+        $table = new xmldb_table('collaborate_submissions');
+
+        // Define fields to be added to collaborate_submissions.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
+        $table->add_field('collaborateid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'id');
+        $table->add_field('page', XMLDB_TYPE_CHAR, '1', null, XMLDB_NOTNULL, null, null, 'collaborateid');
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'page');
+        $table->add_field('submission', XMLDB_TYPE_TEXT, null, null, null, null, null, 'userid');
+        $table->add_field('submissionformat', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'submission');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'submissionformat');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'timecreated');
+
+        // Adding keys.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_mod_savepoint(true, 2024051806, 'collaborate');
+    }
+
+    if ($oldversion < 2024051808) {
+
+        // Define field grade to be added to collaborate_submissions.
+        $table = new xmldb_table('collaborate_submissions');
+        $field = new xmldb_field('grade', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'timemodified');
+
+        // Conditionally launch add field grade.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Collaborate savepoint reached.
+        upgrade_mod_savepoint(true, 2024051808, 'collaborate');
+    }
+
     return true;
 }
