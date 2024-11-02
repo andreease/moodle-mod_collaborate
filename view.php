@@ -22,10 +22,10 @@
  * @copyright  2021 G J Barnard.
  * @author     G J Barnard - {@link http://moodle.org/user/profile.php?id=442195}.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @see https://github.com/moodlehq/moodle-mod_collaborate
- * @see https://github.com/justinhunt/moodle-mod_collaborate
- * @see https://github.com/richardjonesnz/moodle-mod_collaborate
- * @see https://github.com/gjb2048/moodle-mod_collaborate
+ * @see https://github.com/moodlehq/moodle-mod_simplemod
+ * @see https://github.com/justinhunt/moodle-mod_simplemod
+ * @see https://github.com/richardjonesnz/moodle-mod_simplemod
+ * @see https://github.com/gjb2048/moodle-mod_simplemod
  */
 
 use mod_collaborate\output\view;
@@ -37,12 +37,12 @@ $id = optional_param('id', 0, PARAM_INT);
 
 if ($id) {
     $cm = get_coursemodule_from_id('collaborate', $id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-    $collaborate = $DB->get_record('collaborate', array('id' => $cm->instance), '*', MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+    $collaborate = $DB->get_record('collaborate', ['id' => $cm->instance], '*', MUST_EXIST);
 }
 
 // Print the page header.
-$PAGE->set_url('/mod/collaborate/view.php', array('id' => $cm->id));
+$PAGE->set_url('/mod/collaborate/view.php', ['id' => $cm->id]);
 
 require_login($course, true, $cm);
 
@@ -58,16 +58,25 @@ $completion->set_module_viewed($cm);
 $event = \mod_collaborate\event\page_viewed::create(['context' => $PAGE->context, 'objectid' => $id]);
 $event->trigger();
 
-
 // Check for intro page content.
 if (!$collaborate->intro) {
     $collaborate->intro = '';
 }
+
+// Show reports tab if permission exists and admin has allowed.
+$reportstab = false;
+$config = get_config('mod_collaborate');
+if ($config->enablereports) {
+    if (has_capability('mod/collaborate:viewreportstab', $PAGE->context)) {
+        $reportstab = true;
+    }
+}
+
 // Start output to browser.
 echo $OUTPUT->header();
 
 // Call classes/output/view and view.mustache to create output.
-echo $OUTPUT->render(new view($collaborate, $cm->id));
+echo $OUTPUT->render(new view($collaborate, $cm->id, $reportstab));
 
 // End output to browser.
 echo $OUTPUT->footer();

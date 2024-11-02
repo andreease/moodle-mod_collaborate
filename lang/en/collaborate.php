@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
 /**
  * English strings for collaborate
  *
@@ -24,28 +23,31 @@
  * @package    mod_collaborate
  * @copyright  2019 Richard Jones richardnz@outlook.com
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @see https://github.com/moodlehq/moodle-mod_collaborate
- * @see https://github.com/justinhunt/moodle-mod_collaborate
+ * @see https://github.com/moodlehq/moodle-mod_simplemod
+ * @see https://github.com/justinhunt/moodle-mod_simplemod
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['modulename'] = 'Collaborate';
-$string['modulenameplural'] = 'collaborates';
-$string['modulename_help'] = 'Use the collaborate module for... | The collaborate module allows...';
-$string['collaborate:addinstance'] = 'Add a new collaborate';
-$string['collaborate:submit'] = 'Submit collaborate';
-$string['collaborate:view'] = 'View collaborate';
+$string['collaborate'] = 'Collaborate';
+$string['collaborate:addinstance'] = 'Add a new Collaborate';
+$string['collaborate:submit'] = 'Submit Collaborate';
+$string['collaborate:view'] = 'View Collaborate';
+$string['collaborate:viewreportstab'] = 'View reports tab';
 $string['collaboratefieldset'] = 'Custom example fieldset';
 $string['collaboratename'] = 'Name';
 $string['collaboratename_help'] = 'This is the content of the help tooltip associated with the collaboratename field.  Markdown syntax is supported.';
-$string['collaborate'] = 'collaborate';
-$string['pluginadministration'] = 'collaborate administration';
-$string['pluginname'] = 'collaborate';
+$string['dev'] = 'I\'m a developer';
+$string['modulename'] = 'Collaborate';
+$string['modulename_help'] = 'Use the collaborate module for learning about modules.';
+$string['modulenameplural'] = 'Collaborates';
 $string['nocollaborates'] = 'No instances';
+$string['pluginadministration'] = 'Collaborate administration';
+$string['pluginname'] = 'Collaborate';
 
 // Mod form specific collaborate settings.
 $string['title'] = 'Activity title';
+$string['title_help'] = 'Please enter a suitable title for your collaborate main page.';
 
 // Week 2 Task 1.
 $string['pageviewed'] = 'Page viewed';
@@ -53,12 +55,19 @@ $string['pageviewed'] = 'Page viewed';
 // Week 3 Task 1.
 // Mod form specific collaborate settings.
 $string['title'] = 'Activity Title: ';
-$string['texteditor'] = 'Editor {$a}';
+$string['texteditor'] = 'Instructions {$a}';
 
 // Week 3 Task 3.
 // User button labels.
 $string['studenta'] = 'Partner A';
 $string['studentb'] = 'Partner B';
+
 // Showpage.
 $string['user'] = 'User: {$a}';
 $string['returnview'] = 'Main page';
+
+// Week 5 Task 1.
+$string['enablereports'] = 'Enable reports';
+$string['enablereports_desc'] = 'Enable the reports to be viewed by teachers.';
+$string['reportstab'] = 'Reports';
+$string['viewtab'] = 'View';

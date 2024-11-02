@@ -42,30 +42,40 @@
  * @package    mod_collaborate
  * @copyright  2019 Richard Jones richardnz@outlook.com
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @see https://github.com/moodlehq/moodle-mod_collaborate
- * @see https://github.com/justinhunt/moodle-mod_collaborate
+ * @see https://github.com/moodlehq/moodle-mod_simplemod
+ * @see https://github.com/justinhunt/moodle-mod_simplemod
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 // Modify capabilities as needed and remove this comment.
-$capabilities = array(
-    'mod/collaborate:addinstance' => array(
+$capabilities = [
+    'mod/collaborate:addinstance' => [
         'riskbitmask' => RISK_XSS,
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => array(
+        'archetypes' => [
             'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        ),
-        'clonepermissionsfrom' => 'moodle/course:manageactivities'
-    ),
-    'mod/collaborate:view' => array(
+            'manager' => CAP_ALLOW,
+        ],
+        'clonepermissionsfrom' => 'moodle/course:manageactivities',
+    ],
+    'mod/collaborate:view' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
+        'archetypes' => [
             'guest' => CAP_ALLOW,
             'user' => CAP_ALLOW,
-        )
-    )
-);
+        ],
+    ],
+    'mod/collaborate:viewreportstab' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+        'clonepermissionsfrom' => 'moodle/course:manageactivities',
+    ],
+];
