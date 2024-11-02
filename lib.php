@@ -28,11 +28,13 @@
  * @copyright  2019 Richard Jones richardnz@outlook.com
  * @copyright  2022 G J Barnard - {@link http://moodle.org/user/profile.php?id=442195}.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @see https://github.com/moodlehq/moodle-mod_collaborate
- * @see https://github.com/justinhunt/moodle-mod_collaborate
- * @see https://github.com/richardjonesnz/moodle-mod_collaborate
- * @see https://github.com/gjb2048/moodle-mod_collaborate
+ * @see https://github.com/moodlehq/moodle-mod_simplemod
+ * @see https://github.com/justinhunt/moodle-mod_simplemod
+ * @see https://github.com/richardjonesnz/moodle-mod_simplemod
+ * @see https://github.com/gjb2048/moodle-mod_simplemod
  */
+
+use mod_collaborate\local\collaborate_editor;
 
 /* Moodle core API */
 
@@ -77,14 +79,18 @@ function collaborate_supports($feature)
  * @param mod_collaborate_mod_form $mform The form instance itself (if needed)
  * @return int The id of the newly inserted collaborate record
  */
-function collaborate_add_instance(stdClass $collaborate, mod_collaborate_mod_form $mform = null)
+function collaborate_add_instance(stdClass $collaborate, mod_collaborate_mod_form $mform)
 {
-    global $DB;
 
     $collaborate->timecreated = time();
-    $collaborate->id = $DB->insert_record('collaborate', $collaborate);
 
-    return $collaborate->id;
+    // Add new instance with dummy data for the editor fields.
+    $collaborate->instructionsa = 'a';
+    $collaborate->instructionsaformat = FORMAT_HTML;
+    $collaborate->instructionsb = 'b';
+    $collaborate->instructionsbformat = FORMAT_HTML;
+
+    return collaborate_editor::update_editor_instance_helper($collaborate, $mform, true);
 }
 
 /**
@@ -98,16 +104,13 @@ function collaborate_add_instance(stdClass $collaborate, mod_collaborate_mod_for
  * @param mod_collaborate_mod_form $mform The form instance itself (if needed)
  * @return boolean Success/Fail
  */
-function collaborate_update_instance(stdClass $collaborate, mod_collaborate_mod_form $mform = null)
+function collaborate_update_instance(stdClass $collaborate, mod_collaborate_mod_form $mform)
 {
-    global $DB;
 
     $collaborate->timemodified = time();
     $collaborate->id = $collaborate->instance;
 
-    $result = $DB->update_record('collaborate', $collaborate);
-
-    return $result;
+    return collaborate_editor::update_editor_instance_helper($collaborate, $mform);
 }
 
 /**
@@ -129,13 +132,13 @@ function collaborate_refresh_events($courseid = 0)
             return true;
         }
     } else {
-        if (!$collaborates = $DB->get_records('collaborate', array('course' => $courseid))) {
+        if (!$collaborates = $DB->get_records('collaborate', ['course' => $courseid])) {
             return true;
         }
     }
 
     foreach ($collaborates as $collaborate) {
-        collaborate_update_events($collaborate);
+        collaborate_update_events($simplemod);
     }
 
     return true;
@@ -152,7 +155,7 @@ function collaborate_refresh_events($courseid = 0)
 function collaborate_update_events($collaborate, $override = null) {}
 
 /**
- * Removes an instance of the collaborate from the database
+ * Removes an instance of the simplemod from the database
  *
  * Given an ID of an instance of this module,
  * this function will permanently delete the instance
@@ -165,12 +168,12 @@ function collaborate_delete_instance($id)
 {
     global $DB;
 
-    if (! $collaborate = $DB->get_record('collaborate', array('id' => $id))) {
+    if (! $collaborate = $DB->get_record('collaborate', ['id' => $id])) {
         return false;
     }
 
     // Delete any dependent records here.
-    $DB->delete_records('collaborate', array('id' => $collaborate->id));
+    $DB->delete_records('collaborate', ['id' => $collaborate->id]);
 
     return true;
 }
@@ -195,6 +198,7 @@ function collaborate_user_outline($course, $user, $mod, $collaborate)
     $return = new stdClass();
     $return->time = 0;
     $return->info = '';
+
     return $return;
 }
 
@@ -280,7 +284,7 @@ function collaborate_cron()
  */
 function collaborate_get_extra_capabilities()
 {
-    return array();
+    return [];
 }
 
 /* Gradebook API */
@@ -297,7 +301,7 @@ function collaborate_get_extra_capabilities()
 function collaborate_scale_used($collaborateid, $scaleid)
 {
     global $DB;
-    if ($scaleid && $DB->record_exists('collaborate', array('id' => $collaborateid, 'grade' => -$scaleid))) {
+    if ($scaleid && $DB->record_exists('collaborate', ['id' => $simplemodid, 'grade' => -$scaleid])) {
         return true;
     } else {
         return false;
@@ -314,7 +318,7 @@ function collaborate_scale_used($collaborateid, $scaleid)
 function collaborate_scale_used_anywhere($scaleid)
 {
     global $DB;
-    if ($scaleid && $DB->record_exists('collaborate', array('grade' => -$scaleid))) {
+    if ($scaleid && $DB->record_exists('collaborate', ['grade' => -$scaleid])) {
         return true;
     } else {
         return false;
@@ -326,13 +330,14 @@ function collaborate_scale_used_anywhere($scaleid)
  * Needed by {@link grade_update_mod_grades()}.
  *
  * @param stdClass $collaborate instance object with extra cmidnumber and modname property
+ * @param bool $reset reset grades in the gradebook
  * @return void
  */
-function collaborate_grade_item_update(stdClass $collaborate)
+function collaborate_grade_item_update(stdClass $collaborate, $reset = false)
 {
     global $CFG;
     require_once($CFG->libdir . '/gradelib.php');
-    $item = array();
+    $item = [];
     $item['itemname'] = clean_param($collaborate->name, PARAM_NOTAGS);
     $item['gradetype'] = GRADE_TYPE_VALUE;
     if ($collaborate->grade > 0) {
@@ -345,7 +350,9 @@ function collaborate_grade_item_update(stdClass $collaborate)
     } else {
         $item['gradetype'] = GRADE_TYPE_NONE;
     }
-
+    if ($reset) {
+        $item['reset'] = true;
+    }
     grade_update(
         'mod/collaborate',
         $collaborate->course,
@@ -357,6 +364,7 @@ function collaborate_grade_item_update(stdClass $collaborate)
         $item
     );
 }
+
 /**
  * Delete grade item for given collaborate instance
  *
@@ -375,9 +383,10 @@ function collaborate_grade_item_delete($collaborate)
         $collaborate->id,
         0,
         null,
-        array('deleted' => 1)
+        ['deleted' => 1]
     );
 }
+
 /**
  * Update collaborate grades in the gradebook
  *
@@ -391,7 +400,7 @@ function collaborate_update_grades(stdClass $collaborate, $userid = 0)
     global $CFG, $DB;
     require_once($CFG->libdir . '/gradelib.php');
     // Populate array of grade objects indexed by userid.
-    $grades = array();
+    $grades = [];
     grade_update('mod/collaborate', $collaborate->course, 'mod', 'collaborate', $collaborate->id, 0, $grades);
 }
 
@@ -410,7 +419,10 @@ function collaborate_update_grades(stdClass $collaborate, $userid = 0)
  */
 function collaborate_get_file_areas($course, $cm, $context)
 {
-    return array();
+    return [
+        'instructionsa' => 'Instructions for partner A',
+        'instructionsb' => 'Instructions for partner B',
+    ];
 }
 
 /**
@@ -449,7 +461,7 @@ function collaborate_get_file_info($browser, $areas, $course, $cm, $context, $fi
  * @param bool $forcedownload whether or not force download
  * @param array $options additional options affecting the file serving
  */
-function collaborate_pluginfile($course, $cm, $context, $filearea, array $args, $forcedownload, array $options = array())
+function collaborate_pluginfile($course, $cm, $context, $filearea, array $args, $forcedownload, array $options = [])
 {
     global $DB, $CFG;
 
@@ -476,7 +488,7 @@ function collaborate_pluginfile($course, $cm, $context, $filearea, array $args, 
  */
 function collaborate_extend_navigation(navigation_node $navref, stdClass $course, stdClass $module, cm_info $cm)
 {
-    // TODO Delete this function and its docblock, or implement it.
+    // Todo: Delete this function and its docblock, or implement it.
 }
 
 /**
@@ -488,7 +500,7 @@ function collaborate_extend_navigation(navigation_node $navref, stdClass $course
  * @param settings_navigation $settingsnav complete settings navigation tree
  * @param navigation_node $collaboratenode collaborate administration node
  */
-function collaborate_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $collaboratenode = null)
+function collaborate_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $collaboratenode)
 {
-    // TODO Delete this function and its docblock, or implement it.
+    // Todo: Delete this function and its docblock, or implement it.
 }
