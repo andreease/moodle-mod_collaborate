@@ -49,24 +49,22 @@ class submissions
 
         $exists = self::get_submission($cid, $USER->id, $page);
         if ($exists) {
-            $DB->delete_records(
-                'collaborate_submissions',
-                ['collaborateid' => $cid, 'userid' => $USER->id, 'page' => $page]
-            );
+            $data->id = $exists->id;
+            $data->timemodified = time();
+        } else {
+            // Insert a dummy record and get the id.
+            $data->timecreated = time();
+            $data->timemodified = $data->timecreated;
+            $data->collaborateid = $cid;
+            $data->userid = $USER->id;
+            $data->page = $page;
+            $data->submission = ' ';
+            $data->submissionformat = FORMAT_HTML;
+            $dataid = $DB->insert_record('collaborate_submissions', $data);
+            $data->id = $dataid;
         }
 
         $options = collaborate_editor::get_editor_options($context);
-
-        // Insert a dummy record and get the id.
-        $data->timecreated = time();
-        $data->timemodified = time();
-        $data->collaborateid = $cid;
-        $data->userid = $USER->id;
-        $data->page = $page;
-        $data->submission = ' ';
-        $data->submissionformat = FORMAT_HTML;
-        $dataid = $DB->insert_record('collaborate_submissions', $data);
-        $data->id = $dataid;
 
         // Massage the data into a form for saving.
         $data = file_postupdate_standard_editor(
@@ -102,5 +100,40 @@ class submissions
             '*',
             IGNORE_MISSING
         );
+    }
+
+    /**
+     * Retrieve a submission record for grading.
+     *
+     * @param object $collaborate Our collaborate instance.
+     * @param int $sid The submission id.
+     * @return object $data The data required for the grading form.
+     */
+    public static function get_submission_to_grade($collaborate, $sid)
+    {
+        global $DB;
+
+        $record = $DB->get_record('collaborate_submissions', ['id' => $sid], '*', MUST_EXIST);
+        $data = new \stdClass();
+        $data->title = $collaborate->title;
+        $data->submission = $record->submission;
+
+        $user = $DB->get_record('user', ['id' => $record->userid], '*', MUST_EXIST);
+        $data->name = $user->firstname . ' ' . $user->lastname;
+        $data->grade = (is_null($record->grade)) ? '-' : $record->grade;  // So that '-' is shown when first not graded.
+
+        return $data;
+    }
+
+    /**
+     * Update a submission grade.
+     *
+     * @param int $sid The submission id.
+     * @param int $grade The submission grade.
+     */
+    public static function update_grade($sid, $grade)
+    {
+        global $DB;
+        $DB->set_field('collaborate_submissions', 'grade', $grade, ['id' => $sid]);
     }
 }
